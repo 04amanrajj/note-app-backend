@@ -9,6 +9,7 @@ exports.registerUser = async (req, res) => {
   try {
     // from details
     const payLoad = req.body;
+
     //exists users
     const user = await UserModel.findOne({ email: payLoad.email });
     if (user) {
@@ -18,25 +19,20 @@ exports.registerUser = async (req, res) => {
     if (payLoad.password != payLoad.confirmPassword) {
       return res.status(400).send({ message: "password didn't match" });
     }
-    // empty from
-    if (!payLoad) {
-      return res.status(400).send({ message: "fields are empty" });
-    }
     //encrypt password
-    bcrypt.hash(payLoad.password, 10, async (err, hash) => {
-      if (err) {
-        res.status(500).send({ err });
-      } else {
-        payLoad.password = hash;
-        const user = new UserModel(payLoad);
-        await user.save();
-      }
+    const hashPassword =await bcrypt.hash(payLoad.password, 10);
+    payLoad.password = hashPassword;
+
+    const newUser = new UserModel(payLoad);
+    await newUser.save().catch((err) => {
+      throw new Error(err.message);
     });
+
     // send response
     res.status(200).send({ message: "User registerd" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).send({message:error.message});
+    res.status(500).send({ message: error.message });
   }
 };
 
@@ -60,7 +56,7 @@ exports.loginUser = async (req, res) => {
           // send response
           res.status(200).send({ message: "Logged in", token, user });
         } else {
-          res.status(404).send({ message: "Wrong Credntials" });
+          res.status(404).send({ message: "Wrong password" });
         }
       });
     } else {
@@ -69,7 +65,7 @@ exports.loginUser = async (req, res) => {
     }
   } catch (error) {
     console.log(error.message);
-    res.status(500).send({message:error.message});
+    res.status(500).send({ message: error.message });
   }
 };
 
@@ -80,8 +76,8 @@ exports.logout = async (req, res) => {
       fs.readFileSync("./blacklisted.json", "utf-8")
     );
     // check if token exist in list
-    if(blackListed_Data.includes(token)){
-      return res.status(400).send({message:"user is already logged out"});
+    if (blackListed_Data.includes(token)) {
+      return res.status(400).send({ message: "user is already logged out" });
     }
 
     // save token to mongoDB
@@ -95,4 +91,4 @@ exports.logout = async (req, res) => {
     console.log({ error: error.message });
     res.status(500).send({ message: error.message });
   }
-}
+};
