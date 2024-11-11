@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { logger } = require("../middlewares/userLogger.middleware");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
+const { BlackListToken } = require("../models/blacklisted.model");
 
 exports.registerUser = async (req, res) => {
   try {
@@ -35,7 +36,7 @@ exports.registerUser = async (req, res) => {
     res.status(200).send({ message: "User registerd" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).send(error.message);
+    res.status(500).send({message:error.message});
   }
 };
 
@@ -68,20 +69,30 @@ exports.loginUser = async (req, res) => {
     }
   } catch (error) {
     console.log(error.message);
-    res.status(500).send(error.message);
+    res.status(500).send({message:error.message});
   }
 };
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
   try {
     const token = req.headers.authorization;
-    let data = fs.readFileSync("./blacklisted.json", "utf8");
-    data = JSON.parse(data);
-    data.sessions.push({ token });
-    fs.writeFileSync("./blacklisted.json", JSON.stringify(data), "utf8");
-    res.status(200).send({ message: "User logged out" });
+    const blackListed_Data = JSON.parse(
+      fs.readFileSync("./blacklisted.json", "utf-8")
+    );
+    // check if token exist in list
+    if(blackListed_Data.includes(token)){
+      return res.status(400).send({message:"user is already logged out"});
+    }
+
+    // save token to mongoDB
+    const newToken = new BlackListToken({ token });
+    await newToken.save();
+    blackListed_Data.push(token);
+    fs.writeFileSync("./blacklisted.json", JSON.stringify(blackListed_Data));
+    // console.log({ token });
+    res.status(200).send({ message: "user logged out" });
   } catch (error) {
-    console.log(error.message);
-    res.status(500).send(error.message);
+    console.log({ error: error.message });
+    res.status(500).send({ message: error.message });
   }
-};
+}

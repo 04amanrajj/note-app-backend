@@ -1,33 +1,28 @@
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
 
 exports.authenticate = (req, res, next) => {
   try {
     const token = req.headers.authorization;
-    if (token) {
-      // get the data from black list
-      // let data = fs.readFileSync("./blacklisted.json");
-      // data = JSON.parse(data);
-      //  check the current token in that file
-      // data.sessions.forEach((blacklisted) => {
-      // if the token is present in black that mean it's logged out user
-      // if (blacklisted.token == token) {
-      //  thorw errror user alreay is logged out
-      // throw new Error("user is already logged out");
-      // }
-      // });
+    if (!token) {
+      return res.status(403).send({ message: "login first" });
+    }
 
-      const decoded = jwt.verify(token, "jsonwebtoken");
+    // check for token if blacklist
+    // let data = fs.readFileSync("./blacklisted.json");
+    // const blackListedTokens = JSON.parse(data);
+    // if (blackListedTokens.includes(token)) {
+    //   return res.status(400).send("user is already logged out");
+    // }
 
-      if (decoded) {
-        req.userID = decoded.userID;
-        next();
-      } else {
-        res.status(403).send({ message: "please login" });
-      }
-    } else res.status(403).send({ message: "login first" });
+    // verify token for authentication
+    const decoded = jwt.verify(token, "jsonwebtoken");
+    if (!decoded) {
+      return res.status(403).send({ message: "please login" });
+    }
+    req.userID = decoded.userID;
+    next();
   } catch (error) {
     console.log({ error: error.message });
-    res.status(500).send({ error: error.message });
+    res.status(500).send({ message: error.message,fix:"please login again" });
   }
 };
