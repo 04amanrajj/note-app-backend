@@ -6,7 +6,7 @@ exports.allNotes = async (req, res) => {
     res.status(200).send({ message: notes });
   } catch (error) {
     console.log(error.message);
-    res.status(500).send(error.message);
+    res.status(500).send({message:error.message});
   }
 };
 
@@ -20,7 +20,7 @@ exports.addNote = async (req, res) => {
     res.status(200).send({ message: "Note created" });
   } catch (error) {
     console.log(error.message);
-    res.status(500).send(error.message);
+    res.status(500).send({message:error.message});
   }
 };
 
@@ -43,7 +43,7 @@ exports.updateNote = async (req, res) => {
     await NoteModel.findOneAndUpdate({ _id }, payLoad);
     res.status(200).send({ message: "Note updated" });
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(500).send({ message: error.message });
   }
 };
 
@@ -60,6 +60,6 @@ exports.deleteNote = async (req, res) => {
     await NoteModel.findOneAndDelete({ _id });
     res.status(200).send({ message: "Note deleted" });
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(500).send({ message: error.message });
   }
 };

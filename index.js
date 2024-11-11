@@ -8,7 +8,7 @@ const { authenticate } = require("./middlewares/authentication.middleware");
 require("dotenv").config();
 
 app.use(cors());
-app.use(express.json())
+app.use(express.json());
 app.use("/user", userRoute);
 app.use(authenticate);
 app.use("/note", noteRoute);
